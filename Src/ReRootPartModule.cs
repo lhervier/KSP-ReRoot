@@ -10,8 +10,8 @@ namespace com.github.lhervier.ksp.reroot {
     /// Adds a "Set as root" action to the part context menu (Part Action Window).
     ///
     /// Injected on parts via ModuleManager (GameData/ReRootMod/ReRootMod.cfg).
-    /// Shown on parts of the active vessel AND of any other loaded vessel (guiActiveUnfocused, no
-    /// distance limit). KSP's PAW has no disabled-button state, so instead of a greyed button we show
+    /// Shown on parts of the active vessel AND of another loaded vessel within range (guiActiveUnfocused,
+    /// UNFOCUSED_RANGE). KSP's PAW has no disabled-button state, so instead of a greyed button we show
     /// the button XOR a read-only status line: valid root candidates get the clickable button; parts
     /// that can't be the root (the current root, physics-less parts) get a status line saying why.
     /// </summary>
@@ -23,10 +23,14 @@ namespace com.github.lhervier.ksp.reroot {
         // clobber our placement patch before the reload reads it back.
         private const string SAVE_NAME = "ReRootReload";
 
-        // Read-only status line shown (in place of the button) on parts that can't be the root. Like
-        // the button it must reach other loaded vessels, hence unfocusedRange = float.MaxValue (the
-        // square overflows to +Infinity, so any finite distance passes — the only real gate is "loaded").
-        [KSPField(guiActive = false, guiActiveUnfocused = false, unfocusedRange = float.MaxValue, guiName = "#LOC_ReRoot_statusLabel")]
+        // Max distance (m) between the part and the active vessel for the action / status line to show
+        // on a NON-active vessel (KSP checks |part - activeVessel| < range). Kept modest so you act on
+        // nearby vessels (e.g. while on EVA next to them), not anything within the whole load bubble.
+        private const float UNFOCUSED_RANGE = 200f;
+
+        // Read-only status line shown (in place of the button) on parts that can't be the root. Same
+        // unfocusedRange as the button so both behave consistently on other loaded vessels.
+        [KSPField(guiActive = false, guiActiveUnfocused = false, unfocusedRange = UNFOCUSED_RANGE, guiName = "#LOC_ReRoot_statusLabel")]
         public string reRootStatus = "";
 
         // Cached PAW item handles + last computed state (to avoid re-formatting the status every frame).
@@ -34,13 +38,9 @@ namespace com.github.lhervier.ksp.reroot {
         private BaseField statusFld;
         private int lastState = -1;
 
-        // KSP gates the action on a NON-active vessel by distance: it only shows when
-        // |part - activeVessel| < unfocusedRange. We don't want a distance limit at all — if you can
-        // right-click a part, its vessel is loaded, and that's the only gate that should matter. So we
-        // set the range to float.MaxValue (its square overflows to +Infinity, so every finite distance
-        // passes). An unloaded vessel has no part GameObject to click anyway. Visibility is toggled at
-        // runtime by UpdatePawItems (button only on valid candidates).
-        [KSPEvent(guiActive = false, guiActiveUncommand = true, guiActiveUnfocused = false, unfocusedRange = float.MaxValue, guiName = "#LOC_ReRoot_setAsRoot")]
+        // Shows on the active vessel AND on another loaded vessel within UNFOCUSED_RANGE (guiActiveUnfocused).
+        // Visibility is toggled at runtime by UpdatePawItems (button only on valid candidates).
+        [KSPEvent(guiActive = false, guiActiveUncommand = true, guiActiveUnfocused = false, unfocusedRange = UNFOCUSED_RANGE, guiName = "#LOC_ReRoot_setAsRoot")]
         public void SetAsRootEvent() {
             try {
                 if (part == null || part.vessel == null) {
