@@ -2,6 +2,23 @@
 
 A Kerbal Space Program mod that adds a **"Set as root"** action to the part context menu **in flight**. Its main purpose is **EVA Construction**: a Kerbal can never grab or detach the *root* part of a vessel, so this mod lets you move the root onto another part — freeing the old one for editing.
 
+**Unable to grab that damn docking port ?**
+
+![Unable to grab docking port ?](imgs/01%20-%20Unable%20to%20Grab%20Docking%20Port.png)
+
+
+**Set the tank as a new root**
+
+![Set the tank as new root](imgs/02%20-%20Set%20Tank%20as%20new%20root.png)
+
+**This will save and reload the game**
+
+![Save and Reload](imgs/03%20-%20Save%20and%20Reload.png)
+
+**And now you can grab this nice little docking port...**
+
+![And now you can](imgs/04%20-%20Now%20you%20can.png)
+
 ---
 
 ## Why this mod exists
@@ -31,14 +48,14 @@ The clickable button only appears on **valid root candidates** (the same parts t
 
 ## Requirements
 
-- Kerbal Space Program **1.12.x**
+- Kerbal Space Program **1.12.5**, French or English
 - **ModuleManager** (used to inject the action onto parts)
 
 ## Installation
 
 1. Build (see below) or download a release.
-2. Copy the `ReRootMod` folder into your KSP `GameData/` folder.
-3. Make sure `ModuleManager` is also in `GameData/`.
+1. Copy the `ReRootMod` folder into your KSP `GameData/` folder.
+1. Make sure [`ModuleManager`](https://github.com/sarbian/ModuleManager) is also in `GameData/`.
 
 ---
 
