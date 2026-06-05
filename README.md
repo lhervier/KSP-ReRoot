@@ -78,7 +78,7 @@ These are the non-obvious things that each cost a debugging round:
 ## Limitations / notes
 
 - Works on the **active vessel and any nearby loaded vessel** (right-click a part on it — within ~200 m of your active vessel). After the reload you're refocused on the vessel you were controlling, so the operation never steals control away from you.
-- For the action to appear on a *non-active* vessel, your **active vessel must be controllable** (KSP's rule for unfocused part actions) — e.g. a Kerbal on EVA.
+- For the action to appear on a *non-active* vessel, your **active vessel must be controllable** (KSP's rule for unfocused part actions) — any controllable vessel works (a Kerbal on EVA, a rover, a probe…).
 - The operation **saves and reloads** the game (brief loading screen). That's the price of letting KSP rebuild a clean physics state.
 - Landed/splashed vessels are the primary target and are fully validated. Orbital vessels appear to work too.
 - The action is independent of EVA Construction Mode — it's a standalone, technical vessel operation.

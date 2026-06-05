@@ -38,9 +38,8 @@ namespace com.github.lhervier.ksp.reroot {
         private BaseField statusFld;
         private int lastState = -1;
 
-        // Shows on the active vessel AND on another loaded vessel within UNFOCUSED_RANGE (guiActiveUnfocused).
-        // Visibility is toggled at runtime by UpdatePawItems (button only on valid candidates).
-        [KSPEvent(guiActive = false, guiActiveUncommand = true, guiActiveUnfocused = false, unfocusedRange = UNFOCUSED_RANGE, guiName = "#LOC_ReRoot_setAsRoot")]
+        // Shows on the active vessel and on another loaded vessel within UNFOCUSED_RANGE
+        [KSPEvent(guiActive = false, guiActiveUncommand = true, guiActiveUnfocused = false, externalToEVAOnly = false, unfocusedRange = UNFOCUSED_RANGE, guiName = "#LOC_ReRoot_setAsRoot")]
         public void SetAsRootEvent() {
             try {
                 if (part == null || part.vessel == null) {
