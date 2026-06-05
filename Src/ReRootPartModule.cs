@@ -56,9 +56,9 @@ namespace com.github.lhervier.ksp.reroot {
                 if (part == null || part.vessel == null) {
                     return;
                 }
-                // Defensive: the button is only shown on valid candidates (UpdatePawItems), but guard
-                // anyway in case visibility lags a frame behind a tree change.
-                if (!IsRootCandidate(part)) {
+                // Defensive: the button is only shown on valid, non-Kerbal candidates (UpdatePawItems),
+                // but guard anyway in case visibility lags a frame behind a tree change.
+                if (part.isKerbalEVA() || !IsRootCandidate(part)) {
                     ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_ReRoot_cannotSetAsRoot", part.partInfo?.title), 3f, ScreenMessageStyle.UPPER_CENTER);
                     return;
                 }
@@ -104,6 +104,18 @@ namespace com.github.lhervier.ksp.reroot {
         // For a field to show on a non-active vessel KSP needs BOTH guiActive AND guiActiveUnfocused.
         private void UpdatePawItems() {
             if (part == null) {
+                return;
+            }
+            // Never on a Kerbal. A Kerbal seated on an external command seat is a right-clickable part,
+            // but it's never a meaningful root — show neither the button nor the status line. (The MM
+            // patch already skips KerbalEVA; this guards the runtime case / heavily-modded installs.)
+            if (part.isKerbalEVA()) {
+                if (setRootEvt != null) {
+                    setRootEvt.guiActive = setRootEvt.guiActiveUnfocused = false;
+                }
+                if (statusFld != null) {
+                    statusFld.guiActive = statusFld.guiActiveUnfocused = false;
+                }
                 return;
             }
             bool isRoot = (part == part.localRoot);
