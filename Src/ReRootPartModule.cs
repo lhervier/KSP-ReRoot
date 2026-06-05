@@ -10,28 +10,44 @@ namespace com.github.lhervier.ksp.reroot {
     /// Adds a "Set as root" action to the part context menu (Part Action Window).
     ///
     /// Injected on parts via ModuleManager (GameData/ReRootMod/ReRootMod.cfg).
-    /// Shown on valid root candidates of the active vessel AND of any other loaded vessel
-    /// (guiActiveUnfocused, with no distance limit).
+    /// Shown on parts of the active vessel AND of any other loaded vessel (guiActiveUnfocused, no
+    /// distance limit). KSP's PAW has no disabled-button state, so instead of a greyed button we show
+    /// the button XOR a read-only status line: valid root candidates get the clickable button; parts
+    /// that can't be the root (the current root, physics-less parts) get a status line saying why.
     /// </summary>
     public class ReRootPartModule : PartModule {
 
         private const string LOG_PREFIX = "[ReRootMod]";
-        
+
         // Dedicated save file: NOT "persistent", so a scene-exit autosave to "persistent" can't
         // clobber our placement patch before the reload reads it back.
         private const string SAVE_NAME = "ReRootReload";
-        
+
+        // Read-only status line shown (in place of the button) on parts that can't be the root. Like
+        // the button it must reach other loaded vessels, hence unfocusedRange = float.MaxValue (the
+        // square overflows to +Infinity, so any finite distance passes — the only real gate is "loaded").
+        [KSPField(guiActive = false, guiActiveUnfocused = false, unfocusedRange = float.MaxValue, guiName = "#LOC_ReRoot_statusLabel")]
+        public string reRootStatus = "";
+
+        // Cached PAW item handles + last computed state (to avoid re-formatting the status every frame).
+        private BaseEvent setRootEvt;
+        private BaseField statusFld;
+        private int lastState = -1;
+
         // KSP gates the action on a NON-active vessel by distance: it only shows when
         // |part - activeVessel| < unfocusedRange. We don't want a distance limit at all — if you can
         // right-click a part, its vessel is loaded, and that's the only gate that should matter. So we
         // set the range to float.MaxValue (its square overflows to +Infinity, so every finite distance
-        // passes). An unloaded vessel has no part GameObject to click anyway.
-        [KSPEvent(guiActive = true, guiActiveUncommand = true, guiActiveUnfocused = true, unfocusedRange = float.MaxValue, guiName = "#LOC_ReRoot_setAsRoot")]
+        // passes). An unloaded vessel has no part GameObject to click anyway. Visibility is toggled at
+        // runtime by UpdatePawItems (button only on valid candidates).
+        [KSPEvent(guiActive = false, guiActiveUncommand = true, guiActiveUnfocused = false, unfocusedRange = float.MaxValue, guiName = "#LOC_ReRoot_setAsRoot")]
         public void SetAsRootEvent() {
             try {
                 if (part == null || part.vessel == null) {
                     return;
                 }
+                // Defensive: the button is only shown on valid candidates (UpdatePawItems), but guard
+                // anyway in case visibility lags a frame behind a tree change.
                 if (!IsRootCandidate(part)) {
                     ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_ReRoot_cannotSetAsRoot", part.partInfo?.title), 3f, ScreenMessageStyle.UPPER_CENTER);
                     return;
@@ -57,29 +73,49 @@ namespace com.github.lhervier.ksp.reroot {
 
         public override void OnStart(StartState state) {
             base.OnStart(state);
-            BaseEvent ev = Events["SetAsRootEvent"];
-            if (ev != null) {
-                ev.guiName = Localizer.Format("#LOC_ReRoot_setAsRoot");
+            setRootEvt = Events["SetAsRootEvent"];
+            if (setRootEvt != null) {
+                setRootEvt.guiName = Localizer.Format("#LOC_ReRoot_setAsRoot");
             }
-            UpdateEventVisibility();
+            statusFld = Fields["reRootStatus"];
+            if (statusFld != null) {
+                statusFld.guiName = Localizer.Format("#LOC_ReRoot_statusLabel");
+            }
+            UpdatePawItems();
         }
 
         public override void OnUpdate() {
             base.OnUpdate();
-            UpdateEventVisibility();
+            UpdatePawItems();
         }
 
-        // Show the action only on valid root candidates. guiActive gates the focused (active-vessel)
-        // case; guiActiveUnfocused gates the case where the part is on another loaded vessel within
-        // range — toggle both so non-candidates stay hidden either way.
-        private void UpdateEventVisibility() {
-            BaseEvent ev = Events["SetAsRootEvent"];
-            if (ev == null) {
+        // Button XOR status line. KSP has no disabled-button state, so for parts that can't be the root
+        // we hide the button and show a read-only status line ("Re-root: …") explaining why instead.
+        // For a field to show on a non-active vessel KSP needs BOTH guiActive AND guiActiveUnfocused.
+        private void UpdatePawItems() {
+            if (part == null) {
                 return;
             }
-            bool candidate = IsRootCandidate(part);
-            ev.guiActive = candidate;
-            ev.guiActiveUnfocused = candidate;
+            bool isRoot = (part == part.localRoot);
+            bool candidate = IsRootCandidate(part);   // already false for the root and physics-less parts
+            if (setRootEvt != null) {
+                setRootEvt.guiActive = candidate;
+                setRootEvt.guiActiveUnfocused = candidate;
+            }
+            if (statusFld != null) {
+                statusFld.guiActive = !candidate;
+                statusFld.guiActiveUnfocused = !candidate;
+            }
+            // OnUpdate runs every frame on every loaded part — only re-format the text on state change.
+            int state = candidate ? 0 : (isRoot ? 1 : 2);
+            if (state != lastState) {
+                lastState = state;
+                if (state == 1) {
+                    reRootStatus = Localizer.Format("#LOC_ReRoot_statusIsRoot");
+                } else if (state == 2) {
+                    reRootStatus = Localizer.Format("#LOC_ReRoot_statusInvalid");
+                }
+            }
         }
 
         // ============================================================================================

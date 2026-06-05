@@ -23,7 +23,7 @@ Re-rooting is **not** a physical operation. Physics relies on the `PartJoint`s b
 2. Confirm in the dialog. The game is **saved and reloaded**.
 3. You're returned to the **vessel you were controlling** (not the one you re-rooted, unless they're the same) — and the target vessel is now rooted on the part you chose, correctly placed and physically intact.
 
-The action only appears on **valid root candidates** (the same parts the editor would accept — e.g. structural/stack parts, not radial batteries or antennas).
+The clickable button only appears on **valid root candidates** (the same parts the editor would accept — e.g. structural/stack parts, not radial batteries or antennas). On parts that can't be the root — the current root, or a physics-less part — you instead get a small read-only status line (`Re-root: current root` / `Re-root: invalid root part`) in place of the button. (KSP can't grey out a context-menu button, so we swap the button for a status line rather than hide everything.)
 
 > Tip: to free a stuck root part for EVA Construction, right-click an adjacent part of that vessel (it works even while you're on EVA next to it, since the vessel doesn't have to be the one you control) and "Set as root" — the old root is now a normal child you can detach.
 
