@@ -28,9 +28,18 @@ namespace com.github.lhervier.ksp.reroot {
         // nearby vessels (e.g. while on EVA next to them), not anything within the whole load bubble.
         private const float UNFOCUSED_RANGE = 200f;
 
+        // PAW group. We join KSPCommunityFixes' "Part" group (QoL/PAWStockGroups.cs builds
+        // BasePAWGroup("CF_Part", "#autoLOC_6100048", true) and puts Aim Camera / Highlight / autostrut…
+        // in it) so our entry sits with them. Grouping is keyed by name, so matching "CF_Part" merges
+        // into that box when KSPCF is installed; without KSPCF we just get our own tidy "Part" group.
+        private const string PAW_GROUP = "CF_Part";
+        private const string PAW_GROUP_TITLE = "#autoLOC_6100048";   // stock localization tag for "Part"
+
         // Read-only status line shown (in place of the button) on parts that can't be the root. Same
         // unfocusedRange as the button so both behave consistently on other loaded vessels.
-        [KSPField(guiActive = false, guiActiveUnfocused = false, unfocusedRange = UNFOCUSED_RANGE, guiName = "#LOC_ReRoot_statusLabel")]
+        [KSPField(guiActive = false, guiActiveUnfocused = false, unfocusedRange = UNFOCUSED_RANGE,
+                  groupName = PAW_GROUP, groupDisplayName = PAW_GROUP_TITLE, groupStartCollapsed = true,
+                  guiName = "#LOC_ReRoot_statusLabel")]
         public string reRootStatus = "";
 
         // Cached PAW item handles + last computed state (to avoid re-formatting the status every frame).
@@ -39,7 +48,9 @@ namespace com.github.lhervier.ksp.reroot {
         private int lastState = -1;
 
         // Shows on the active vessel and on another loaded vessel within UNFOCUSED_RANGE
-        [KSPEvent(guiActive = false, guiActiveUncommand = true, guiActiveUnfocused = false, externalToEVAOnly = false, unfocusedRange = UNFOCUSED_RANGE, guiName = "#LOC_ReRoot_setAsRoot")]
+        [KSPEvent(guiActive = false, guiActiveUncommand = true, guiActiveUnfocused = false, externalToEVAOnly = false, unfocusedRange = UNFOCUSED_RANGE,
+                  groupName = PAW_GROUP, groupDisplayName = PAW_GROUP_TITLE, groupStartCollapsed = true,
+                  guiName = "#LOC_ReRoot_setAsRoot")]
         public void SetAsRootEvent() {
             try {
                 if (part == null || part.vessel == null) {
