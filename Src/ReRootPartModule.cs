@@ -14,6 +14,7 @@ namespace com.github.lhervier.ksp.reroot {
     /// UNFOCUSED_RANGE). KSP's PAW has no disabled-button state, so instead of a greyed button we show
     /// the button XOR a read-only status line: valid root candidates get the clickable button; parts
     /// that can't be the root (the current root, physics-less parts) get a status line saying why.
+    /// Both items are hidden entirely while the game is under time warp.
     /// </summary>
     public class ReRootPartModule : PartModule {
 
@@ -106,10 +107,14 @@ namespace com.github.lhervier.ksp.reroot {
             if (part == null) {
                 return;
             }
-            // Never on a Kerbal. A Kerbal seated on an external command seat is a right-clickable part,
-            // but it's never a meaningful root — show neither the button nor the status line. (The MM
-            // patch already skips KerbalEVA; this guards the runtime case / heavily-modded installs.)
-            if (part.isKerbalEVA()) {
+            // Two cases where we show neither the button nor the status line:
+            //  - a Kerbal: seated on an external command seat it's a right-clickable part, but it's
+            //    never a meaningful root (the MM patch already skips KerbalEVA; this guards the
+            //    runtime case / heavily-modded installs);
+            //  - time warp: re-rooting saves + reloads the game, which only makes sense at real time.
+            //    Hiding beats a status line here — the warp is a transient state, not a property of
+            //    the part, and the entry comes back on its own once the rate is back to 1x.
+            if (part.isKerbalEVA() || !IsRealTime()) {
                 if (setRootEvt != null) {
                     setRootEvt.guiActive = setRootEvt.guiActiveUnfocused = false;
                 }
@@ -142,8 +147,21 @@ namespace com.github.lhervier.ksp.reroot {
 
         // ============================================================================================
 
+        // True when the game runs at 1x. Reading the rate (rather than the rate index) covers both
+        // on-rails and physics warp, plus the ramp-down while leaving warp, and reports real time when
+        // TimeWarp has no instance yet — whereas TimeWarp.CurrentRateIndex returns 1 in that case.
+        private static bool IsRealTime() {
+            return TimeWarp.CurrentRate <= 1f;
+        }
+
         private static void DoReRoot(Part newRoot) {
             try {
+                // The confirmation dialog stays up across a rate change, so re-check here: the user may
+                // have started warping between opening it and confirming.
+                if (!IsRealTime()) {
+                    ScreenMessages.PostScreenMessage(Localizer.Format("#LOC_ReRoot_abortedWarp"), 4f, ScreenMessageStyle.UPPER_CENTER);
+                    return;
+                }
                 Vessel v = newRoot.vessel;
                 Part oldRoot = v.rootPart;
                 if (newRoot == oldRoot) {
