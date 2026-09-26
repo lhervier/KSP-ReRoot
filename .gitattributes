@@ -1,0 +1,23 @@
+# Line endings: LF in the working tree for every text file, whatever tool writes it.
+* text=auto eol=lf
+
+# cmd.exe mis-parses labels and goto in LF-only batch files.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Written by KSP or by measurement tools: kept byte for byte.
+*.log -text
+*.csv -text
+*.sfs -text
+*.craft -text
+
+# Binaries.
+*.dll binary
+*.pdb binary
+*.exe binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.dds binary
+*.mu binary
