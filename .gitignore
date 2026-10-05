@@ -2,3 +2,4 @@
 Output
 Release
 obj
+__pycache__/
